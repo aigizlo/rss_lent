@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Агрегатор новостей{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>Последние новости</h1>
+                <small class="text-muted">Обновляется каждые 30 минут</small>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <select id="sourceFilter" class="form-select form-select-sm" onchange="filterBySource(this.value)">
+                        <option value="">Все источники</option>
+                        {% for source in sources %}
+                        <option value="{{ source.id }}" {% if selected_source and selected_source.id == source.id %}selected{% endif %}>
+                            {{ source.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if selected_source %}
+                <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-times"></i> Сбросить фильтр
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if articles %}
+            {% for article in articles %}
+            <div class="article-card p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <a href="{{ url_for('category_news', category_name=article.category.name) }}" 
+                       class="category-badge me-2">
+                        {{ article.category.display_name }}
+                    </a>
+                    <small class="article-meta">
+                        {{ article.source.name }} • 
+                        <span data-timestamp="{{ article.published_at.isoformat() }}">
+                            {{ article.published_at.strftime('%d.%m.%Y %H:%M') }}
+                        </span>
+                    </small>
+                </div>
+                
+                <div class="row">
+                    {% if article.image_url %}
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('article_detail', article_id=article.id) }}">
+                            <img src="{{ article.image_url }}" 
+                                 class="img-fluid rounded article-image" 
+                                 alt="{{ article.title[:50] }}..."
+                                 onerror="this.style.display='none'">
+                        </a>
+                    </div>
+                    <div class="col-md-9">
+                    {% else %}
+                    <div class="col-12">
+                    {% endif %}
+                        <h5 class="mb-2">
+                            <a href="{{ url_for('article_detail', article_id=article.id) }}" class="article-title">
+                                {{ article.title }}
+                            </a>
+                        </h5>
+                        
+                        {% if article.description %}
+                        <p class="text-muted mb-2">{{ article.description }}</p>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('article_detail', article_id=article.id) }}" class="btn btn-sm btn-outline-primary">
+                                Читать полностью <i class="fas fa-arrow-right"></i>
+                            </a>
+                            <div>
+                                {% if article.view_count > 0 %}
+                                <small class="text-muted me-2">
+                                    <i class="fas fa-eye"></i> {{ article.view_count }}
+                                </small>
+                                {% endif %}
+                                <small class="text-muted">
+                                    <a href="{{ article.link }}" target="_blank" class="text-decoration-none">
+                                        <i class="fas fa-external-link-alt"></i> Источник
+                                    </a>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle"></i>
+                <h4>Новостей пока нет</h4>
+                <p>Попробуйте обновить новости или проверьте подключение к интернету.</p>
+                <button class="btn btn-primary" onclick="updateNews()">
+                    <i class="fas fa-refresh"></i> Обновить новости
+                </button>
+            </div>
+        {% endif %}
+        
+        <!-- Pagination -->
+        {% if pagination and pagination.pages > 1 %}
+        <nav aria-label="Навигация по страницам">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('index', page=pagination.prev_num, source=request.args.get('source')) }}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in pagination.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != pagination.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('index', page=page_num, source=request.args.get('source')) }}">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('index', page=pagination.next_num, source=request.args.get('source')) }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="sidebar">
+            <h5>Категории новостей</h5>
+            <div class="list-group">
+                {% for category in categories %}
+                <a href="{{ url_for('category_news', category_name=category.name) }}" 
+                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    {{ category.display_name }}
+                    <span class="badge bg-primary rounded-pill">
+                        {{ category.articles|selectattr('is_active')|list|length }}
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="news-stats mt-4">
+            <h6><i class="fas fa-chart-bar"></i> Статистика</h6>
+            <div class="row text-center">
+                <div class="col-6">
+                    <div class="h4">{{ articles|length if articles else 0 }}</div>
+                    <small>Статей на странице</small>
+                </div>
+                <div class="col-6">
+                    <div class="h4">{{ categories|length if categories else 0 }}</div>
+                    <small>Категорий</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="sidebar mt-4">
+            <h6><i class="fas fa-rss"></i> Источники новостей</h6>
+            <div class="list-group list-group-flush">
+                {% for source in sources %}
+                <a href="{{ url_for('index', source=source.id) }}" 
+                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center border-0 px-0 py-1
+                   {% if selected_source and selected_source.id == source.id %}active{% endif %}">
+                    <span class="small">{{ source.name }}</span>
+                    <small class="text-muted">{{ source.category.display_name }}</small>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="mt-4 p-3 bg-light rounded">
+            <h6><i class="fas fa-info-circle"></i> О проекте</h6>
+            <p class="mb-0 small">
+                Агрегатор новостей собирает актуальную информацию из проверенных источников 
+                и обновляется в реальном времени.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Добавить источник - Агрегатор новостей{% endblock %}
+
+{% block content %}
+<section class="mt-4 mb-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Добавить новый источник новостей</h5>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                    {% endwith %}
+
+                    <form action="" method="post">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Название источника</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="url" class="form-label">URL сайта</label>
+                            <input type="url" class="form-control" id="url" name="url" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="rss_url" class="form-label">RSS URL</label>
+                            <input type="url" class="form-control" id="rss_url" name="rss_url" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="category_id" class="form-label">Категория</label>
+                            <select class="form-select" id="category_id" name="category_id" required>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.display_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            Добавить источник
+                        </button>
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary ms-2">
+                            Отмена
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

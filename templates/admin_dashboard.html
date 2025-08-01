@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Админ Панель - Агрегатор новостей{% endblock %}
+
+{% block content %}
+<div class="row mt-5 mb-4">
+    <div class="col-md">
+        <h1>Административная панель</h1>
+    </div>
+    <div class="col-md text-end">
+        <a href="{{ url_for('add_source') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Добавить источник
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">Источники новостей</div>
+            <div class="card-body">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>URL</th>
+                            <th>RSS</th>
+                            <th>Категория</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for source in sources %}
+                        <tr>
+                            <td>{{ source.name }}</td>
+                            <td>
+                                <a href="{{ source.url }}" target="_blank">Сайт</a>
+                            </td>
+                            <td>
+                                <a href="{{ source.rss_url }}" target="_blank">RSS</a>
+                            </td>
+                            <td>{{ source.category.display_name }}</td>
+                            <td>
+                                {% if source.is_active %}
+                                    <span class="badge bg-success">Активен</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Неактивен</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-secondary">Изменить</button>
+                                <button class="btn btn-sm btn-danger">Удалить</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">Статистика</div>
+            <div class="card-body">
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Всего статей
+                        <span class="badge bg-primary rounded-pill">{{ stats.total_articles }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Всего источников
+                        <span class="badge bg-primary rounded-pill">{{ stats.total_sources }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

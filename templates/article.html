@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}{{ article.title }} - Агрегатор новостей{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="mb-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Главная</a></li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('category_news', category_name=article.category.name) }}">
+                            {{ article.category.display_name }}
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ article.title[:50] }}...</li>
+                </ol>
+            </nav>
+        </div>
+
+        <article class="article-detail">
+            <header class="mb-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <a href="{{ url_for('category_news', category_name=article.category.name) }}" 
+                       class="category-badge">
+                        {{ article.category.display_name }}
+                    </a>
+                    <div class="text-muted">
+                        <small>
+                            <i class="fas fa-eye"></i> {{ article.view_count }} просмотров
+                        </small>
+                    </div>
+                </div>
+                
+                <h1 class="article-title-main">{{ article.title }}</h1>
+                
+                <div class="article-meta d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <span class="badge bg-secondary me-2">{{ article.source.name }}</span>
+                        <small class="text-muted">
+                            <i class="fas fa-clock"></i>
+                            <span data-timestamp="{{ article.published_at.isoformat() }}">
+                                {{ article.published_at.strftime('%d.%m.%Y %H:%M') }}
+                            </span>
+                        </small>
+                    </div>
+                    <div>
+                        <a href="{{ article.link }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-external-link-alt"></i> Источник
+                        </a>
+                    </div>
+                </div>
+            </header>
+
+            <div class="article-content mt-4">
+                {% if article.image_url %}
+                <div class="article-image-container mb-4">
+                    <img src="{{ article.image_url }}" 
+                         class="img-fluid rounded article-main-image" 
+                         alt="{{ article.title }}"
+                         onerror="this.parentElement.style.display='none'">
+                </div>
+                {% endif %}
+                
+                {% if article.description %}
+                <div class="alert alert-light">
+                    <strong>Краткое содержание:</strong><br>
+                    {{ article.description }}
+                </div>
+                {% endif %}
+
+                {% if article.content %}
+                <div class="article-text">
+                    {{ article.content|replace('\n', '<br>')|safe }}
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Полный текст недоступен</strong><br>
+                    Не удалось загрузить полный текст статьи. Вы можете прочитать её на оригинальном сайте.
+                    <div class="mt-2">
+                        <a href="{{ article.link }}" target="_blank" class="btn btn-warning">
+                            <i class="fas fa-external-link-alt"></i> Читать на сайте источника
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <footer class="article-footer mt-4 pt-4 border-top">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted">
+                            Опубликовано: {{ article.published_at.strftime('%d.%m.%Y в %H:%M') }}
+                        </small>
+                    </div>
+                    <div>
+                        <small class="text-muted">
+                            Источник: <a href="{{ article.link }}" target="_blank">{{ article.source.name }}</a>
+                        </small>
+                    </div>
+                </div>
+            </footer>
+        </article>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="sidebar">
+            <h5>Похожие новости</h5>
+            {% if similar_articles %}
+            <div class="list-group">
+                {% for similar in similar_articles %}
+                <a href="{{ url_for('article_detail', article_id=similar.id) }}" 
+                   class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ similar.title[:60] }}{% if similar.title|length > 60 %}...{% endif %}</h6>
+                        <small class="text-muted">
+                            <i class="fas fa-eye"></i> {{ similar.view_count }}
+                        </small>
+                    </div>
+                    <p class="mb-1">{{ similar.description[:100] }}{% if similar.description|length > 100 %}...{% endif %}</p>
+                    <small class="text-muted">
+                        {{ similar.source.name }} • 
+                        <span data-timestamp="{{ similar.published_at.isoformat() }}">
+                            {{ similar.published_at.strftime('%d.%m.%Y') }}
+                        </span>
+                    </small>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">Нет похожих новостей</p>
+            {% endif %}
+        </div>
+
+        <div class="mt-4 p-3 bg-light rounded">
+            <h6><i class="fas fa-share-alt"></i> Поделиться</h6>
+            <div class="d-flex gap-2">
+                <a href="https://twitter.com/intent/tweet?url={{ request.url }}&text={{ article.title }}" 
+                   target="_blank" class="btn btn-sm btn-outline-primary">
+                    <i class="fab fa-twitter"></i> Twitter
+                </a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url }}" 
+                   target="_blank" class="btn btn-sm btn-outline-primary">
+                    <i class="fab fa-facebook"></i> Facebook
+                </a>
+            </div>
+        </div>
+
+        <div class="mt-4 p-3 bg-light rounded">
+            <h6><i class="fas fa-info-circle"></i> Информация</h6>
+            <ul class="list-unstyled mb-0">
+                <li><strong>Категория:</strong> {{ article.category.display_name }}</li>
+                <li><strong>Источник:</strong> {{ article.source.name }}</li>
+                <li><strong>Дата:</strong> {{ article.published_at.strftime('%d.%m.%Y %H:%M') }}</li>
+                <li><strong>Просмотры:</strong> {{ article.view_count }}</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+.article-title-main {
+    font-size: 2.5rem;
+    font-weight: bold;
+    line-height: 1.2;
+    color: #212529;
+    margin-bottom: 1rem;
+}
+
+.article-text {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #333;
+    text-align: justify;
+}
+
+.article-text p {
+    margin-bottom: 1rem;
+}
+
+.article-detail {
+    background: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.article-footer {
+    background-color: #f8f9fa;
+    margin: 2rem -2rem -2rem -2rem;
+    padding: 1rem 2rem;
+    border-radius: 0 0 0.5rem 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .article-title-main {
+        font-size: 2rem;
+    }
+    
+    .article-detail {
+        padding: 1rem;
+    }
+    
+    .article-footer {
+        margin: 1rem -1rem -1rem -1rem;
+        padding: 1rem;
+    }
+}
+</style>
+{% endblock %}
